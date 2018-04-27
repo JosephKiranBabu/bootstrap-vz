@@ -1,0 +1,61 @@
+---
+name: freedombox-{system.release}-{system.architecture}-{provider.virtualization}-{%Y}-{%m}-{%d}-{%H}{%M}-ebs
+tags:
+  Name: "FreedomBox 0.28.0"
+  Debian: "testing"
+provider:
+  name: ec2
+  virtualization: hvm
+  enhanced_networking: simple
+  description: FreedomBox {system.release} {system.architecture}
+bootstrapper:
+  workspace: /target
+  tarball: true
+  mirror: http://cloudfront.debian.net/debian
+system:
+  release: testing
+  architecture: amd64
+  bootloader: grub
+  charmap: UTF-8
+  locale: en_US
+  timezone: UTC
+volume:
+  backing: ebs
+  partitions:
+    type: gpt
+    root:
+      filesystem: ext4
+      size: 8GiB
+packages:
+  mirror: http://cloudfront.debian.net/debian
+  components:
+    - main
+    - contrib
+    - non-free
+  install:
+    - awscli
+    - python-boto
+    - python3-boto
+    - apt-transport-https
+    - lvm2
+    - ncurses-term
+    - parted
+    - cloud-init
+    - cloud-utils
+    - gdisk
+    - systemd
+    - systemd-sysv
+plugins:
+  cloud_init:
+    metadata_sources: Ec2
+    username: admin
+    enable_modules:
+      cloud_init_modules:
+        - {module: growpart, position: 4}
+  commands:
+    commands:
+      - ['chroot {root} sudo apt update']
+      - ['chroot {root} sudo apt -y remove chrony']
+      - ['chroot {root} sudo mkdir -p /var/lib/freedombox']
+      - ['chroot {root} sudo touch /var/lib/freedombox/is-freedombox-disk-image']
+      - ['chroot {root} sudo DEBIAN_FRONTEND=noninteractive apt -y install freedombox-setup']
